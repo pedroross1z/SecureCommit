@@ -1,0 +1,30 @@
+# Docker Compose auxiliar — SO o container do OWASP ZAP.
+# O backend FastAPI invoca `docker run --rm zaproxy/zap-stable` por scan;
+# este compose e usado para:
+#   - puxar/testar a imagem antes do primeiro scan (docker compose pull)
+#   - subir o ZAP em modo daemon manualmente para debug (profiles: debug)
+#
+# NUNCA usar `privileged: true`. API administrativa do ZAP fica so em rede interna.
+services:
+  zap:
+    image: zaproxy/zap-stable
+    profiles: ["debug"]  # nao sobe no `docker compose up` padrao
+    container_name: aspm-dast-zap-debug
+    command: >
+      zap.sh -daemon
+             -host 0.0.0.0 -port 8090
+             -config api.disablekey=false
+             -config api.key=${ZAP_API_KEY:-change-me}
+             -config api.addrs.addr.name=.*
+             -config api.addrs.addr.regex=true
+    ports:
+      - "127.0.0.1:8090:8090"  # bind so em loopback
+    volumes:
+      - ../scan_workdir/dast:/zap/wrk:rw
+      - ./zap:/zap/plans:ro
+    cpus: 2
+    mem_limit: 2g
+    read_only: false  # ZAP escreve home dir
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"

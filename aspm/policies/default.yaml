@@ -1,0 +1,36 @@
+name: default
+description: >
+  Gate razoavel para CI: bloqueia secrets expostos, findings criticos,
+  CVEs conhecidos com severidade alta, e qualquer finding pontuado com
+  risco alto pelo motor de IA (>=80).
+rules:
+  - id: no-secrets
+    description: Nenhum secret exposto no repositorio
+    action: fail
+    when:
+      category_in: [secret]
+
+  - id: no-critical-severity
+    description: Nenhum finding critico dos scanners
+    action: fail
+    when:
+      severity_in: [critical]
+
+  - id: no-high-risk-cve
+    description: CVE conhecido com severidade high/critical bloqueia
+    action: fail
+    when:
+      cve_present: true
+      severity_in: [high, critical]
+
+  - id: ai-high-risk
+    description: Risk score da IA >= 80
+    action: fail
+    when:
+      min_risk_score: 80
+
+  - id: warn-high-severity
+    description: Findings 'high' viram warning (nao bloqueiam)
+    action: warn
+    when:
+      severity_in: [high]

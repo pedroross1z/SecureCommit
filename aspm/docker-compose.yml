@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aspm
+      POSTGRES_PASSWORD: aspm
+      POSTGRES_DB: aspm
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aspm -d aspm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://aspm:aspm@db:5432/aspm
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - scan_workdir:/tmp/aspm-scans
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  scan_workdir:

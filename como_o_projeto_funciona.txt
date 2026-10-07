@@ -1,0 +1,75 @@
+● 1. Como funciona?
+
+  O cliente conecta o repositório de código dele na plataforma. A gente clona o repositório, roda 3 ferramentas de segurança em paralelo, junta tudo num relatório único, e usa IA pra dizer o que é urgente e o
+  que pode esperar. Se algo grave for encontrado, a plataforma bloqueia automaticamente a publicação daquele código.
+
+  2. Qual linguagem?
+
+  Python no servidor e React no site (a tela que o usuário vê). A IA é a Claude, da Anthropic. Roda em Docker — sobe com um comando.
+
+  3. Como é feito o scan?
+
+  Três ferramentas open-source rodando ao mesmo tempo, cada uma cuidando de um tipo de risco:
+
+  - Semgrep → problemas no código escrito pelo time (ex: campo de busca vulnerável a ataque)
+  - Trivy → bibliotecas desatualizadas com falhas conhecidas (ex: Django com brecha de SQL Injection)
+  - Gitleaks → senhas e chaves esquecidas dentro do código
+
+  No teste real que rodamos, um projeto médio gerou 163 alertas em menos de 1 minuto.
+
+  4. E a IA, o que faz?
+
+  Duas coisas:
+
+  1. Prioriza — dá nota de 0 a 100 pra cada alerta e explica o porquê. O dev não vê "273 problemas críticos", vê "5 que você precisa olhar hoje".
+  2. Sugere a correção — com um clique, gera o conserto pronto. O dev revisa e aplica se concordar.
+
+  Usa dois modelos: um rápido e barato pra triagem inicial, outro mais forte só nos casos importantes. Isso mantém o custo baixo (menos de 10 centavos de dólar por scan).
+
+  5. Como isso vira valor no dia a dia?
+
+  Quando o dev tenta subir código com problema grave, o merge é bloqueado automaticamente. Ele vê no próprio Pull Request o que quebrou e por quê. Sem trocar de tela, sem esperar auditoria, sem depender de
+  ninguém do time de segurança revisar manualmente.
+
+  6. Segurança dos dados
+
+  - O código é clonado, escaneado e apagado. A gente não guarda o repositório.
+  - Só ficam salvos os alertas em si (arquivo, linha, categoria) — não o código-fonte.
+  - A chave da IA fica no servidor, nunca no navegador do usuário.
+
+  ---
+  One-liner:
+
+  ▎ "É um cão de guarda de segurança de código com IA — ele lê seu repositório, aponta só o que importa e barra o merge quando algo grave passar."
+
+
+
+❯ legal, agora, quais são essas 3 ferramentas de segurança?
+
+● As 3 ferramentas
+
+  1. Semgrep — o "revisor de código"
+  Lê o código que seu time escreveu procurando padrões perigosos. É como um professor de português que passa o olho no texto e circula os erros de gramática — só que aqui os "erros" são coisas tipo campo de
+  busca vulnerável a hacker, senha aparecendo em log, uso de função proibida.
+  Origem: startup Semgrep (ex-r2c), open-source.
+
+  2. Trivy — o "conferente de estoque"
+  Todo software moderno usa dezenas de bibliotecas prontas (código de terceiros). Trivy pega essa lista, compara com um banco público de vulnerabilidades conhecidas e avisa: "olha, essa versão do Django tem
+  uma brecha que hacker pode explorar — atualiza". Também olha configurações de Docker e infraestrutura.
+  Origem: Aqua Security, open-source.
+
+  3. Gitleaks — o "detector de vazamento"
+  Vasculha o código atrás de coisas que nunca deviam estar ali: senhas, chaves de API, tokens de acesso, chaves da AWS. É o erro mais comum e mais perigoso — desenvolvedor coloca a chave no código pra testar,
+  esquece, e sobe pro GitHub. Hacker acha em minutos.
+  Origem: projeto comunitário open-source.
+
+  ---
+  Por que essas 3 e não outras?
+
+  - São gratuitas (open-source) — sem custo de licença
+  - São as mais usadas do mercado na sua categoria — comunidade grande, base de regras sempre atualizada
+  - Cobrem as 3 principais fontes de risco em código: código próprio, código de terceiros e segredos vazados
+  - Rodam rápido — os 3 juntos escanearam nosso projeto de teste em ~50 segundos
+
+  Sozinhas, cada uma resolve 1/3 do problema. Juntas + IA em cima, você tem cobertura completa sem pagar licença de ferramenta cara tipo Snyk, Checkmarx ou Veracode (que custam dezenas de milhares de reais por
+   ano).

@@ -1,0 +1,41 @@
+name: dast
+description: >
+  Gate orientado a findings DAST (OWASP ZAP). Combinavel com `default`:
+  rode o gate duas vezes no CI (uma com --policy default, outra com
+  --policy dast) ou crie uma policy composta se precisar.
+
+rules:
+  # 1. Severidade alta no ZAP (riskcode=3) bloqueia qualquer promocao.
+  - id: dast-high-severity
+    description: Vulnerabilidade DAST com severidade alta bloqueia
+    action: fail
+    when:
+      category_in: [dast]
+      severity_in: [high]
+
+  # 2. IA pontuou DAST acima de 80 — mesmo que severidade do ZAP seja
+  #    menor, a priorizacao detectou risco elevado em producao.
+  - id: dast-ai-high-risk
+    description: Finding DAST com risk score IA >= 80 bloqueia
+    action: fail
+    when:
+      category_in: [dast]
+      min_risk_score: 80
+
+  # 3. CWE "top offenders" sempre bloqueiam, independente da severidade
+  #    reportada pelo scanner (ex.: SQLi, XSS stored, SSRF, RCE).
+  - id: dast-top-cwes
+    description: CWE top offenders em DAST sempre bloqueiam
+    action: fail
+    when:
+      category_in: [dast]
+      cwe_any: [CWE-89, CWE-78, CWE-77, CWE-94, CWE-918]
+
+  # 4. Severidade media so vira warning — nao bloqueia build mas
+  #    aparece no sumario e no PR.
+  - id: dast-medium-warn
+    description: Findings DAST medios viram warning
+    action: warn
+    when:
+      category_in: [dast]
+      severity_in: [medium]

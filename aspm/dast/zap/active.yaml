@@ -1,0 +1,41 @@
+# Automation Framework plan — perfil 'active'
+# ATENCAO: envia payloads ofensivos. Rodar APENAS em ambientes autorizados.
+# Equivalente ao `zap-full-scan.py`. Backend valida payload.authorized=true.
+env:
+  contexts:
+    - name: default
+      urls:
+        - "${ZAP_TARGET_URL}"
+      includePaths:
+        - "${ZAP_TARGET_URL}.*"
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: default
+      maxDuration: 10
+      maxDepth: 7
+      acceptCookies: true
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan
+    parameters:
+      context: default
+      policy: "Default Policy"
+      maxRuleDurationInMins: 2
+      maxScanDurationInMins: 30
+      threadPerHost: 2
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: ASPM DAST — active

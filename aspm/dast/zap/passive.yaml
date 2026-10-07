@@ -1,0 +1,34 @@
+# Automation Framework plan — perfil 'passive'
+# Spider + passive scan apenas. Use `zap-baseline.py -s` como atalho equivalente.
+env:
+  contexts:
+    - name: default
+      urls:
+        - "${ZAP_TARGET_URL}"
+      includePaths:
+        - "${ZAP_TARGET_URL}.*"
+      excludePaths: []
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: default
+      maxDuration: 5
+      maxDepth: 5
+      maxChildren: 10
+      acceptCookies: true
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: ASPM DAST — passive

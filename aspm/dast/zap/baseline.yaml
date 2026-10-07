@@ -1,0 +1,39 @@
+# Automation Framework plan — perfil 'baseline'
+# Spider + ajaxSpider + passive scan. Equivalente ao `zap-baseline.py`.
+env:
+  contexts:
+    - name: default
+      urls:
+        - "${ZAP_TARGET_URL}"
+      includePaths:
+        - "${ZAP_TARGET_URL}.*"
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: default
+      maxDuration: 10
+      maxDepth: 7
+      acceptCookies: true
+
+  - type: spiderAjax
+    parameters:
+      context: default
+      maxDuration: 5
+      maxCrawlDepth: 7
+      inScopeOnly: true
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: ASPM DAST — baseline
